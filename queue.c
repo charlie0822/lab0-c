@@ -81,7 +81,7 @@ element_t *q_remove_head(struct list_head *head, char *sp, size_t bufsize)
         return NULL;
     }
     element_t *node = list_entry(head->next, element_t, list);
-    if (sp) {
+    if (sp != NULL) {
         strncpy(sp, node->value, bufsize - 1);
         sp[bufsize - 1] = '\0';
         list_del(&node->list);
@@ -96,8 +96,8 @@ element_t *q_remove_tail(struct list_head *head, char *sp, size_t bufsize)
     if (!head || list_empty(head)) {
         return NULL;
     }
-    element_t *node = list_last_entry(head->prev, element_t, list);
-    if (sp) {
+    element_t *node = list_last_entry(head, element_t, list);
+    if (sp != NULL) {
         strncpy(sp, node->value, bufsize - 1);
         sp[bufsize - 1] = '\0';
         list_del(&node->list);
@@ -122,7 +122,7 @@ int q_size(struct list_head *head)
 /* Delete the middle node in queue */
 bool q_delete_mid(struct list_head *head)
 {
-    if (!head) {
+    if (!head || list_empty(head)) {
         return false;
     }
     struct list_head *left = head->prev, *right = head->next;
@@ -140,21 +140,26 @@ bool q_delete_mid(struct list_head *head)
 /* Delete all nodes that have duplicate string */
 bool q_delete_dup(struct list_head *head)
 {
-    /*  if(!head){
-          return false;
-      }
+    if (!head || list_empty(head)) {
+        return false;
+    }
 
-      struct list_head *fast = head->next, *slow = head->next;
-      while(fast!=slow){
-          fast = fast->next->next;
-          slow = slow->next;
-      }
-      if(!fast){
-          return false;
-      }
-
-      // https://leetcode.com/problems/remove-duplicates-from-sorted-list-ii/
-     */
+    struct list_head *fast, *now = NULL;
+    bool isNeedDel = false;
+    list_for_each_safe (now, fast, head) {
+        element_t *node = list_entry(now, element_t, list);
+        element_t *dulNode = list_entry(fast, element_t, list);
+        if (node->list.next != head &&
+            strcmp(node->value, dulNode->value) == 0) {
+            isNeedDel = true;
+            list_del(fast);
+            q_release_element(dulNode);
+        } else if (isNeedDel) {
+            list_del(now);
+            q_release_element(node);
+            isNeedDel = false;
+        }
+    }
     return true;
 }
 
